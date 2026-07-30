@@ -52,35 +52,41 @@ class Citation(BaseModel):
     section: str = Field(description="Ví dụ: §2")
     quote: str = Field(description="Đoạn trích nguyên văn")
 
-class Quiz(BaseModel):
-    question: str = Field(description="Câu hỏi trắc nghiệm")
-    options: List[str] = Field(description="Đúng 4 lựa chọn (A, B, C, D)")
-    correct_index: int = Field(description="Vị trí đáp án đúng (0-3)")
-    explanation: str = Field(description="Giải thích")
-
 class SubmitResponseInput(BaseModel):
-    intent: str = Field(description="explain | clarify | out_of_scope | no_evidence | evaluate")
-    answer: str = Field(description="Chỉ chứa phần giải thích. TUYỆT ĐỐI KHÔNG chứa nội dung câu hỏi trắc nghiệm.")
+    intent: str = Field(description="explain | clarify | out_of_scope | no_evidence | chitchat")
+    answer: str = Field(description="Phần giải thích bằng văn bản thường. BẮT BUỘC KHÔNG chứa bất kỳ nội dung/JSON nào của câu hỏi trắc nghiệm.")
     citations: Optional[List[Citation]] = Field(default_factory=list)
-    quiz: Optional[Quiz] = Field(None, description="JSON object chứa câu hỏi trắc nghiệm ứng dụng. BẮT BUỘC PHẢI CÓ khi intent='explain'.")
-    quizzes: Optional[List[Quiz]] = Field(None, description="Không sử dụng (đã tắt).")
+    has_quiz: bool = Field(False, description="Đánh dấu True nếu cần sinh câu hỏi trắc nghiệm (CHỈ khi intent='explain')")
+    quiz_question: Optional[str] = Field(None, description="Nội dung câu hỏi trắc nghiệm ứng dụng")
+    quiz_options: Optional[List[str]] = Field(None, description="Mảng chứa 4 lựa chọn (A, B, C, D)")
+    quiz_correct_index: Optional[int] = Field(None, description="Vị trí đáp án đúng (0-3)")
+    quiz_explanation: Optional[str] = Field(None, description="Giải thích đáp án đúng")
 
 @tool("submit_response", args_schema=SubmitResponseInput)
-def submit_response(intent: str, answer: str, citations: Optional[List[Citation]] = None, quiz: Optional[Quiz] = None, quizzes: Optional[List[Quiz]] = None) -> str:
+def submit_response(intent: str, answer: str, citations: Optional[List[Citation]] = None, 
+                    has_quiz: bool = False, quiz_question: str = None, quiz_options: List[str] = None, 
+                    quiz_correct_index: int = None, quiz_explanation: str = None) -> str:
     """
     Sử dụng công cụ này để đưa ra câu trả lời cuối cùng cho người dùng. 
     Bắt buộc phải gọi công cụ này để kết thúc việc suy nghĩ và đưa ra kết quả.
     """
     citations_dict = [c.dict() for c in citations] if citations else []
-    quiz_dict = quiz.dict() if quiz else None
-    quizzes_dict = [q.dict() for q in quizzes] if quizzes else None
+    
+    quiz_dict = None
+    if has_quiz and quiz_question and quiz_options:
+        quiz_dict = {
+            "question": quiz_question,
+            "options": quiz_options,
+            "correct_index": quiz_correct_index if quiz_correct_index is not None else 0,
+            "explanation": quiz_explanation or ""
+        }
     
     return json.dumps({
         "intent": intent,
         "answer": answer,
         "citations": citations_dict,
         "quiz": quiz_dict,
-        "quizzes": quizzes_dict
+        "quizzes": None
     }, ensure_ascii=False)
 
 def build_agent_executor():
@@ -123,7 +129,7 @@ def run_agent(question: str, chat_history: List[Dict[str, str]] = None, test_me:
     if test_me:
         question = "Người dùng yêu cầu kiểm tra kiến thức. Hãy viết một câu dẫn ngắn (hoặc tổng hợp ý chính) vào trường `answer`. BẮT BUỘC KHÔNG VIẾT NỘI DUNG CÂU HỎI TRẮC NGHIỆM VÀO TRƯỜNG `answer` (vì UI đã tự động vẽ câu hỏi). Sinh ra 3 câu hỏi trắc nghiệm và CHỈ truyền chúng vào trường `quizzes` của tool `submit_response`."
     else:
-        strict_reminder = "\n\n(LƯU Ý TỪ HỆ THỐNG: TUYỆT ĐỐI KHÔNG VIẾT DỮ LIỆU JSON HAY TEXT CỦA CÂU HỎI TRẮC NGHIỆM VÀO TRƯỜNG `answer`! Câu hỏi trắc nghiệm phải được truyền qua tham số `quiz` của tool.)"
+        strict_reminder = "\n\n(LƯU Ý TỪ HỆ THỐNG: CHỈ sinh câu hỏi trắc nghiệm khi giải thích kiến thức bài học (intent='explain'). NẾU CẦN, hãy set `has_quiz=True` và ĐIỀN TRỰC TIẾP vào các tham số `quiz_question`, `quiz_options` của công cụ. KHÔNG BAO GIỜ viết nội dung quiz vào trường `answer`!)"
         question = question + strict_reminder
                 
     response = agent_executor.invoke({
