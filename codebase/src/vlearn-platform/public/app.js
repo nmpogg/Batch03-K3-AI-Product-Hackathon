@@ -76,10 +76,12 @@ const state = {
   chatWidth: 380,
   uploadUrl: null,
   selectedText: '',
+  userId: 'user-' + Math.random().toString(36).slice(2, 10),
+  quota: { remaining: 15, limit: 15 },
   messages: [
     {
       role: 'assistant',
-      content: 'Xin chào! Mình là VLearn Tutor. Bạn có thể bôi đen một đoạn trên slide để hỏi hoặc gửi câu hỏi tự do nhé.'
+      content: 'Xin chào! Mình là VLearn Tutor 🎓\n\nMình có thể giải thích nội dung từ 6 buổi học dựa trên transcript và sinh câu hỏi kiểm tra hiểu bài. Trả lời đúng → hoàn lại 1 lượt hỏi!\n\nBôi đen một đoạn trên slide hoặc gõ câu hỏi bên dưới nhé.'
     }
   ]
 };
@@ -360,8 +362,8 @@ function renderQuiz(quiz, messageIndex) {
   const feedback = hasAnswered
     ? `
       <div class="quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}" role="status">
-        <strong>${isCorrect ? 'Chính xác!' : 'Chưa chính xác'}</strong>
-        <p>${escapeHtml(quiz.explanation)}</p>
+        <strong>${isCorrect ? 'Chính xác! ✅ +1 lượt hoàn lại' : 'Chưa chính xác ❌'}</strong>
+        <p>${escapeHtml(quiz.serverExplanation || quiz.explanation)}</p>
       </div>
     `
     : '';
@@ -460,8 +462,8 @@ function renderReader() {
             <button class="icon-btn" data-action="new-chat" aria-label="Hội thoại mới">${icon('plus')}</button>
           </div>
           <div class="chat-quota">
-            <div class="quota-row"><span>Quota Tutor trong ngày</span><span>4 / 15 câu</span></div>
-            <div class="progress-bar"><div class="progress-fill" style="width:27%"></div></div>
+            <div class="quota-row"><span>Lượt hỏi còn lại hôm nay</span><span>${state.quota.remaining} / ${state.quota.limit}</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${Math.round((state.quota.remaining / state.quota.limit) * 100)}%"></div></div>
           </div>
           <div class="chat-body" id="chat-body">
             <div class="context-label">Ngữ cảnh: ${slide.name} · trang ${state.activePage}${state.selectedText ? ' · đã bôi đen' : ''}</div>
@@ -549,8 +551,16 @@ async function sendChat(form) {
   const value = textarea.value.trim();
   if (!value) return;
 
+  // Optimistic quota check
+  if (state.quota.remaining <= 0) {
+    toast('⏰ Hết lượt hỏi hôm nay! Trả lời đúng quiz để nhận lại lượt.');
+    return;
+  }
+
   state.messages.push({ role: 'user', content: value });
   textarea.value = '';
+  // Show loading indicator
+  state.messages.push({ role: 'assistant', content: '...', loading: true });
   render();
 
   const context = {
@@ -565,15 +575,21 @@ async function sendChat(form) {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: state.messages, context })
+      body: JSON.stringify({ messages: state.messages.filter(m => !m.loading), context, userId: state.userId })
     });
     const payload = await response.json();
+    // Remove loading message
+    state.messages = state.messages.filter(m => !m.loading);
     state.messages.push({
       role: 'assistant',
       content: payload.message || payload.error || 'Tutor chưa có phản hồi.',
-      quiz: payload.quiz || null
+      quiz: payload.quiz ? { ...payload.quiz, _citations: payload.citations } : null,
+      intent: payload.intent
     });
+    // Update quota from server response
+    if (payload.quota) state.quota = payload.quota;
   } catch {
+    state.messages = state.messages.filter(m => !m.loading);
     state.messages.push({
       role: 'assistant',
       content: 'Không kết nối được server local. Nếu bạn mở file HTML trực tiếp, hãy chạy `npm run dev` để dùng chatbot.'
@@ -635,8 +651,36 @@ document.addEventListener('click', (event) => {
   if (action === 'answer-quiz') {
     const message = state.messages[Number(target.dataset.message)];
     if (message?.quiz && !Number.isInteger(message.quiz.selectedIndex)) {
-      message.quiz.selectedIndex = Number(target.dataset.option);
-      render();
+      const selectedIndex = Number(target.dataset.option);
+      message.quiz.selectedIndex = selectedIndex;
+      render(); // optimistic render
+      // Call /api/evaluate for server-side grading
+      try {
+        const evalRes = await fetch('/api/evaluate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            quizQuestion: message.quiz.question,
+            quizOptions: message.quiz.options,
+            correctIndex: message.quiz.correctIndex,
+            selectedIndex,
+            citations: message.quiz._citations || [],
+            userId: state.userId
+          })
+        });
+        const evalPayload = await evalRes.json();
+        // Update quiz with server explanation
+        if (evalPayload.explanation) {
+          message.quiz.serverExplanation = evalPayload.explanation;
+        }
+        if (evalPayload.quota) {
+          state.quota = evalPayload.quota;
+          if (evalPayload.quotaAction === 'refund') toast('✅ Đúng! Hoàn lại 1 lượt hỏi 🎉');
+        }
+        render();
+      } catch {
+        // Use local correctIndex fallback, already rendered
+      }
     }
   }
   if (action === 'toggle-chat') {
