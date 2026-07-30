@@ -5,17 +5,16 @@ const course = {
   code: 'COMP2010 - Khóa 3 + 4 Phase 1',
   learners: 1074,
   completedDays: 0,
-  totalDays: 6,
+  totalDays: 2,
   description: 'Khóa học thực hành xây sản phẩm AI: từ LLM foundation, xác định bài toán, prompt engineering, agentic workflow đến prototype và validation.',
   lessons: [
     {
       day: 1,
       title: 'Day 1',
       topic: 'AI & LLM Foundation',
-      status: 'Chưa hoàn thành',
+      status: 'Đang học',
       slides: [
-        { name: 'day01_302.pdf', pages: 83, kind: 'mock' },
-        { name: 'material_mrxpq9zu_t8e6xs.pdf', pages: 32, kind: 'mock' }
+        { name: 'd1-slide-hackathon.pdf', pages: 83, kind: 'local', url: '/local-slides/d1-slide-hackathon.pdf' }
       ]
     },
     {
@@ -23,57 +22,20 @@ const course = {
       title: 'Day 2',
       topic: 'Xác định bài toán AI',
       status: 'Chưa hoàn thành',
-      slides: [{ name: 'day02-problem-framing.pdf', pages: 54, kind: 'mock' }]
-    },
-    {
-      day: 3,
-      title: 'Day 3',
-      topic: 'Từ chatbot đến agentic workflow',
-      status: 'Chưa hoàn thành',
       slides: [
-        { name: 'day03-tu-chatbot-den-agentic-workflow.pdf', pages: 61, kind: 'mock' },
-        { name: 'Day03-D302-tu-chatbot-den-agent.pdf', pages: 42, kind: 'mock' }
+        { name: 'd2-slide-hackathon.pdf', pages: 54, kind: 'local', url: '/local-slides/d2-slide-hackathon.pdf' }
       ]
-    },
-    {
-      day: 4,
-      title: 'Day 4',
-      topic: 'Prompt engineering tool use',
-      status: 'Chưa hoàn thành',
-      slides: [
-        { name: 'day04-prompt-engineering-tool-use.pdf', pages: 70, kind: 'mock' },
-        { name: 'day04-prompt-engineering-tool-eval.pdf', pages: 45, kind: 'mock' },
-        { name: 'day04-prompt-engineering-tool-lab.pdf', pages: 28, kind: 'mock' }
-      ]
-    },
-    {
-      day: 5,
-      title: 'Day 5',
-      topic: 'Evaluation & validation',
-      status: 'Chưa hoàn thành',
-      slides: [
-        { name: 'day05-evaluation-validation.pdf', pages: 48, kind: 'mock' },
-        { name: 'day05-golden-set.pdf', pages: 26, kind: 'mock' },
-        { name: 'day05-user-test-log.pdf', pages: 18, kind: 'mock' }
-      ]
-    },
-    {
-      day: 6,
-      title: 'Day 6',
-      topic: 'Demo sản phẩm AI',
-      status: 'Chưa hoàn thành',
-      slides: [{ name: 'day06-demo-readiness.pdf', pages: 36, kind: 'mock' }]
     }
   ]
 };
 
 const state = {
-  view: 'catalog',
+  view: 'reader',
   activeLessonIndex: 0,
   activeSlideIndex: 0,
   activePage: 1,
   chatCollapsed: false,
-  chatWidth: 380,
+  chatWidth: 400,
   uploadUrl: null,
   selectedText: '',
   userId: 'user-' + Math.random().toString(36).slice(2, 10),
@@ -415,16 +377,7 @@ function renderReader() {
         </div>
       </header>
       <div class="reader-layout">
-        <aside class="materials">
-          <div class="materials-head">
-            <button class="icon-btn" aria-label="Học liệu">${icon('book-open')}</button>
-            <div>
-              <h2>Học liệu môn học</h2>
-              <p>Chương, slide và tài liệu đã upload</p>
-            </div>
-          </div>
-          ${renderMaterials()}
-        </aside>
+
         <main class="viewer">
           <div class="viewer-toolbar">
             <button class="tool-btn active">${icon('mouse-pointer-2')} Đọc</button>
@@ -435,10 +388,6 @@ function renderReader() {
             <button class="tool-btn">Trang ${state.activePage} · 1 note</button>
             <button class="tool-btn">${icon('minus')} 100% ${icon('plus')}</button>
             <div class="toolbar-divider"></div>
-            <label class="upload-label">
-              ${icon('upload')} Upload slide
-              <input type="file" accept="application/pdf" data-action="upload-pdf" />
-            </label>
             <button class="tool-btn" data-action="download-mock">${icon('download')}</button>
           </div>
           <button class="edge-nav left" data-action="prev-page" aria-label="Trang trước">${icon('chevron-left')}</button>
@@ -526,23 +475,6 @@ function nextPage(delta) {
   const viewer = document.querySelector('#viewer-scroll');
   const target = viewer?.querySelector(`[data-page="${state.activePage}"]`);
   if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  render();
-}
-
-function handleUpload(file) {
-  if (!file) return;
-  if (state.uploadUrl) URL.revokeObjectURL(state.uploadUrl);
-  state.uploadUrl = URL.createObjectURL(file);
-  const lesson = currentLesson();
-  lesson.slides.unshift({
-    name: file.name,
-    pages: '?',
-    kind: 'upload',
-    url: state.uploadUrl
-  });
-  state.activeSlideIndex = 0;
-  state.activePage = 1;
-  toast(`Đã upload ${file.name}`);
   render();
 }
 
@@ -636,7 +568,7 @@ function startResize(event) {
   window.addEventListener('mouseup', onUp);
 }
 
-document.addEventListener('click', (event) => {
+document.addEventListener('click', async (event) => {
   const target = event.target.closest('[data-action]');
   if (!target) return;
 
@@ -694,11 +626,6 @@ document.addEventListener('click', (event) => {
   if (action === 'download-mock') toast('Prototype đang dùng slide mock trong HTML.');
 });
 
-document.addEventListener('change', (event) => {
-  const input = event.target.closest('[data-action="upload-pdf"]');
-  if (input) handleUpload(input.files?.[0]);
-});
-
 document.addEventListener('submit', (event) => {
   const form = event.target.closest('[data-action="chat-form"]');
   if (!form) return;
@@ -733,29 +660,5 @@ document.addEventListener('mousedown', (event) => {
   if (handle) startResize(event);
 });
 
-async function hydrateLocalSlides() {
-  try {
-    const response = await fetch('/api/local-slides');
-    if (!response.ok) return;
-    const payload = await response.json();
-    const localSlides = Array.isArray(payload.slides) ? payload.slides : [];
-    const dayOne = course.lessons[0];
-
-    localSlides.reverse().forEach((slide) => {
-      const exists = dayOne.slides.some((item) => item.name === slide.name);
-      if (!exists) {
-        dayOne.slides.unshift({
-          ...slide,
-          kind: 'local'
-        });
-      }
-    });
-
-    if (localSlides.length) render();
-  } catch {
-    // Opening index.html without the Node server still works with mock slides.
-  }
-}
-
 render();
-hydrateLocalSlides();
+

@@ -10,14 +10,22 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = Number(process.env.PORT || 5173);
 const localSlideDirs = [
-  path.join(__dirname, '..', '..', 'data', 'vlearn-pack', 'slide'),
-  path.join(__dirname, '..', '..', 'data', 'vlearn-pack', 'slides')
+  path.join(__dirname, '..', '..', '..', 'data', 'vlearn-pack', 'slide'),
+  path.join(__dirname, '..', '..', '..', 'data', 'vlearn-pack', 'slides')
 ];
 
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 localSlideDirs.forEach((dir) => {
-  app.use('/local-slides', express.static(dir, { fallthrough: true }));
+  app.use('/local-slides', express.static(dir, { 
+    fallthrough: true,
+    setHeaders: (res, path) => {
+      if (path.toLowerCase().endsWith('.pdf')) {
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline');
+      }
+    }
+  }));
 });
 
 // ─── Quota store (in-memory, keyed by user id or session) ───────────────────
