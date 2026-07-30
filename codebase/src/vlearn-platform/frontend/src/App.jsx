@@ -139,10 +139,6 @@ function App() {
           <h1 style={{fontSize: 16, margin: 0, fontWeight: 700}}>{COURSE.slide.name}</h1>
           <p style={{fontSize: 13, color: 'var(--muted)', margin: 0}}>{COURSE.code}</p>
         </div>
-        <div className="topbar-actions">
-          <button className="icon-btn"><Moon size={18}/></button>
-          <button className="pill-btn"><UserRound size={16}/> Sinh viên ẩn danh</button>
-        </div>
       </header>
 
       <main className="main-layout">
@@ -150,15 +146,12 @@ function App() {
           <div className="pdf-container">
             <div className="pdf-header">
               <div style={{display: 'flex', gap: 12}}>
-                <button className="pill-btn" style={{background: 'var(--surface-soft)', color: 'var(--text)'}}><MousePointer2 size={16}/> Đọc</button>
-                <button className="icon-btn"><Pen size={16}/></button>
-                <button className="icon-btn"><Highlighter size={16}/></button>
+                <button className="pill-btn" style={{background: 'var(--surface-soft)', color: 'var(--text)'}}>Slide Bài Giảng</button>
               </div>
               <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
                 <span style={{fontSize: 14, fontWeight: 600}}>Trang {activePage} / {COURSE.slide.pages}</span>
                 <button className="icon-btn" onClick={() => setActivePage(p => Math.max(1, p - 1))}><ChevronLeft size={16}/></button>
                 <button className="icon-btn" onClick={() => setActivePage(p => Math.min(COURSE.slide.pages, p + 1))}><ChevronRight size={16}/></button>
-                <button className="icon-btn"><Download size={16}/></button>
               </div>
             </div>
             <div className="pdf-viewer">

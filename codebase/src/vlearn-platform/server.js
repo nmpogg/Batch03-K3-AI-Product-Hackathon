@@ -74,9 +74,8 @@ async function getSystemPrompt() {
       cachedSystemPrompt = raw.slice(0, 3000); // fallback: first 3000 chars
     }
   } catch {
-    cachedSystemPrompt = 'Bạn là VLearn Tutor. Trả lời bằng tiếng Việt, ngắn gọn, bám sát nội dung bài học. KHÔNG bịa citation. Luôn sinh quiz MCQ sau giải thích.';
+    cachedSystemPrompt = 'Bạn là VLearn Tutor. Trả lời bằng tiếng Việt.';
   }
-  return cachedSystemPrompt;
 }
 
 // ─── Mock reply (fallback khi không có API key) ──────────────────────────────
@@ -84,104 +83,23 @@ function buildMockReply(context) {
   const lesson = context?.lessonTitle || 'bài học hiện tại';
   const slide = context?.slideName || 'slide đang mở';
   const page = context?.page || 1;
-  const lessonKey = lesson.toLowerCase();
 
   let learningContent = {
     summary: [
-      'LLM học các mẫu ngôn ngữ từ lượng lớn dữ liệu và tạo câu trả lời bằng cách dự đoán token tiếp theo dựa trên ngữ cảnh.',
-      'Chất lượng đầu ra phụ thuộc vào prompt, dữ liệu huấn luyện và phần ngữ cảnh được cung cấp.',
-      'Khi xây sản phẩm AI, cần bắt đầu từ một bài toán rõ ràng, có dữ liệu phù hợp và tiêu chí đánh giá đo được.'
+      'Hệ thống hiện đang chạy ở chế độ demo do thiếu API Key.',
+      'Tính năng tìm kiếm transcript thực tế tạm thời bị tắt.',
+      'Hãy thêm khóa API OpenRouter vào biến môi trường LLM_API_KEY để kích hoạt.'
     ],
     quiz: {
-      question: 'Thao tác cốt lõi của một LLM khi sinh câu trả lời là gì?',
-      options: [
-        'Tìm nguyên văn câu trả lời trong cơ sở dữ liệu',
-        'Dự đoán token tiếp theo từ ngữ cảnh',
-        'Thực thi một bộ luật cố định',
-        'Luôn tìm kiếm thông tin trên Internet'
-      ],
-      correctIndex: 1,
-      explanation:
-        'LLM tạo nội dung tuần tự bằng cách ước lượng xác suất và chọn token tiếp theo dựa trên các token đã có trong ngữ cảnh.'
+      question: 'AI là viết tắt của từ gì?',
+      options: ['Artificial Intelligence', 'Automated Interface', 'Advanced Internet', 'Alien Invasion'],
+      correctIndex: 0,
+      explanation: 'AI là Artificial Intelligence (Trí tuệ nhân tạo).'
     }
   };
 
-  if (lessonKey.includes('day 2')) {
-    learningContent = {
-      summary: [
-        'Một bài toán AI tốt phải gắn với nhu cầu người dùng và một quyết định hoặc công việc cụ thể.',
-        'Trước khi chọn mô hình, cần xác định dữ liệu đầu vào, đầu ra mong muốn và tiêu chí thành công.',
-        'Nên ưu tiên quy trình có tần suất đủ cao, dữ liệu khả dụng và kết quả có thể kiểm chứng.'
-      ],
-      quiz: {
-        question: 'Bước nào nên làm trước khi lựa chọn mô hình AI?',
-        options: [
-          'Chọn model có nhiều tham số nhất',
-          'Thiết kế logo sản phẩm',
-          'Xác định bài toán và tiêu chí thành công',
-          'Tăng số lượng prompt'
-        ],
-        correctIndex: 2,
-        explanation:
-          'Mô hình chỉ là một phần của giải pháp. Bài toán, dữ liệu và tiêu chí thành công phải được xác định trước để chọn công nghệ phù hợp.'
-      }
-    };
-  } else if (lessonKey.includes('agentic')) {
-    learningContent = {
-      summary: [
-        'Chatbot chủ yếu phản hồi hội thoại, còn agentic workflow có thể lập kế hoạch, dùng công cụ và theo dõi trạng thái.',
-        'Một agent thường kết hợp LLM, tool, memory và vòng lặp kiểm soát.',
-        'Cần giới hạn quyền, theo dõi lỗi và có điểm dừng rõ ràng để workflow vận hành an toàn.'
-      ],
-      quiz: {
-        question: 'Thành phần nào giúp AI agent thực hiện hành động bên ngoài hội thoại?',
-        options: ['Temperature', 'Tool', 'Token limit', 'System font'],
-        correctIndex: 1,
-        explanation:
-          'Tool cho phép agent gọi API, truy vấn dữ liệu hoặc thực thi một thao tác; LLM quyết định khi nào và cách dùng tool.'
-      }
-    };
-  } else if (lessonKey.includes('prompt')) {
-    learningContent = {
-      summary: [
-        'Prompt tốt mô tả rõ mục tiêu, ngữ cảnh, ràng buộc và định dạng đầu ra.',
-        'Ví dụ mẫu giúp mô hình hiểu chính xác hơn kiểu câu trả lời mong muốn.',
-        'Prompt cần được kiểm thử trên nhiều tình huống thay vì tối ưu cho một ví dụ duy nhất.'
-      ],
-      quiz: {
-        question: 'Thành phần nào giúp đầu ra của LLM nhất quán và dễ sử dụng hơn?',
-        options: [
-          'Yêu cầu một định dạng đầu ra rõ ràng',
-          'Luôn tăng temperature',
-          'Bỏ toàn bộ ngữ cảnh',
-          'Chỉ dùng prompt một từ'
-        ],
-        correctIndex: 0,
-        explanation:
-          'Định dạng đầu ra rõ ràng như JSON, bảng hoặc cấu trúc mục giúp giảm mơ hồ và làm kết quả dễ xử lý hơn.'
-      }
-    };
-  } else if (lessonKey.includes('evaluation') || lessonKey.includes('validation')) {
-    learningContent = {
-      summary: [
-        'Đánh giá sản phẩm AI cần một tập tình huống đại diện, tiêu chí chấm rõ ràng và log kết quả.',
-        'Golden set giúp so sánh các phiên bản prompt hoặc model theo cùng một chuẩn.',
-        'Đánh giá tự động nên đi cùng phản hồi người dùng và kiểm tra thủ công cho các trường hợp rủi ro.'
-      ],
-      quiz: {
-        question: 'Golden set được dùng chủ yếu để làm gì?',
-        options: [
-          'Lưu API key',
-          'So sánh chất lượng trên một tập tình huống chuẩn',
-          'Tăng tốc độ mạng',
-          'Thiết kế giao diện'
-        ],
-        correctIndex: 1,
-        explanation:
-          'Golden set là tập ví dụ chuẩn có kết quả hoặc tiêu chí mong đợi, giúp đo và so sánh chất lượng một cách nhất quán.'
-      }
-    };
-  } else if (lessonKey.includes('demo')) {
+  const lessonKey = lesson.toLowerCase();
+  if (lessonKey.includes('demo')) {
     learningContent = {
       summary: [
         'Demo nên tập trung vào một luồng người dùng hoàn chỉnh và giá trị sản phẩm tạo ra.',
@@ -230,10 +148,75 @@ function parseLLMOutput(rawText, fallback) {
   }
 }
 
+// ─── Local RAG Logic ──────────────────────────────────────────────────────────
+let cachedTranscriptChunks = null;
+
+async function loadAndChunkTranscript() {
+  if (cachedTranscriptChunks) return cachedTranscriptChunks;
+  const transcriptPath = path.join(__dirname, '..', '..', '..', 'data', 'vlearn-pack', 'transcript', 'transcript-04-clean.md');
+  try {
+    const raw = await fs.readFile(transcriptPath, 'utf-8');
+    // Băm nhỏ văn bản theo các đoạn văn (cách nhau bởi 2 dấu xuống dòng)
+    const chunks = raw.split('\n\n').map(c => c.trim()).filter(c => c.length > 50);
+    cachedTranscriptChunks = chunks;
+    return chunks;
+  } catch (error) {
+    console.error("Error loading transcript:", error);
+    return [];
+  }
+}
+
+function searchRelevantChunks(question, chunks, topK = 3) {
+  // Lấy danh sách các từ có độ dài > 2 (loại bỏ từ nối ngắn)
+  const keywords = question.toLowerCase().match(/[\p{L}\d]{3,}/gu) || [];
+  if (keywords.length === 0) return [];
+  
+  // Tính điểm mỗi chunk dựa trên số lần xuất hiện của các keywords
+  const scoredChunks = chunks.map(chunk => {
+    const chunkLower = chunk.toLowerCase();
+    let score = 0;
+    keywords.forEach(kw => {
+      // Đếm số lần xuất hiện của từ khóa trong chunk
+      const count = (chunkLower.match(new RegExp(kw, 'g')) || []).length;
+      score += count;
+    });
+    return { chunk, score };
+  });
+
+  // Lọc bỏ những chunk không có điểm nào, sắp xếp giảm dần và lấy top K
+  return scoredChunks
+    .filter(sc => sc.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topK)
+    .map(sc => sc.chunk);
+}
+
 // ─── Build user turn message ─────────────────────────────────────────────────
-function buildUserTurn(messages, context, quotaRemaining) {
+async function buildUserTurn(messages, context, quotaRemaining) {
   const lastUser = [...messages].reverse().find((m) => m.role === 'user');
   const question = lastUser?.content || '';
+
+  // Local RAG (Bắt buộc dùng RAG cho mọi câu hỏi)
+  const chunks = await loadAndChunkTranscript();
+  const topChunks = searchRelevantChunks(question, chunks, 3);
+  let ragContext = '';
+  
+  if (topChunks.length > 0) {
+    ragContext = [
+      '=== TRÍCH ĐOẠN TRANSCRIPT BẮT BUỘC ===',
+      'Dưới đây là nội dung trích xuất từ transcript buổi học. BẠN PHẢI DÙNG THÔNG TIN NÀY ĐỂ TRẢ LỜI CÂU HỎI.',
+      'NẾU THÔNG TIN ĐỂ TRẢ LỜI CÂU HỎI KHÔNG CÓ TRONG CÁC TRÍCH ĐOẠN NÀY, BẠN PHẢI TRẢ LỜI: "Tôi không tìm thấy thông tin này trong bài giảng" (đặt intent là no_evidence). Tuyệt đối không tự bịa thêm kiến thức bên ngoài.',
+      ...topChunks.map(c => `[Trích đoạn]: ${c}`),
+      ''
+    ].join('\n');
+  } else {
+    ragContext = [
+      '=== TRÍCH ĐOẠN TRANSCRIPT BẮT BUỘC ===',
+      'Không tìm thấy đoạn transcript nào khớp với câu hỏi.',
+      'BẠN PHẢI TRẢ LỜI: "Tôi không tìm thấy thông tin này trong bài giảng" (đặt intent là no_evidence). Tuyệt đối không tự bịa thêm kiến thức bên ngoài.',
+      ''
+    ].join('\n');
+  }
 
   const parts = [
     '=== NGỮ CẢNH HỌC TẬP ===',
@@ -242,6 +225,11 @@ function buildUserTurn(messages, context, quotaRemaining) {
     `Slide đang mở: ${context.slideName || 'chưa rõ'} · Trang ${context.page || 1}`,
     context.selection ? `Đoạn học viên bôi đen: "${context.selection}"` : null,
     `Lượt hỏi còn lại: ${quotaRemaining}/15`,
+    '',
+    ragContext,
+    '=== YÊU CẦU BẮT BUỘC ===',
+    'Sau khi giải thích, bạn LUÔN LUÔN phải sinh ra một câu hỏi trắc nghiệm (quiz) để kiểm tra lại kiến thức vừa giải thích ở trường "quiz" trong chuỗi JSON.',
+    'Câu hỏi trắc nghiệm phải bám sát vào những gì có trong phần Transcript bên trên.',
     '',
     '=== CÂU HỎI CỦA HỌC VIÊN ===',
     question,
@@ -325,8 +313,9 @@ app.post('/api/chat', async (req, res) => {
   const model = process.env.LLM_MODEL || 'inclusionai/ling-3.0-flash:free';
   const temperature = Number(process.env.LLM_TEMPERATURE || 0.1);
 
+  // ── Build User Turn directly (No Agent Router) ──────────────────────────
   const systemPrompt = await getSystemPrompt();
-  const userTurn = buildUserTurn(messages, context, getQuota(userId));
+  const userTurn = await buildUserTurn(messages, context, getQuota(userId));
 
   // Build upstream message array (keep history but replace last user msg with enriched version)
   const historyMessages = messages
