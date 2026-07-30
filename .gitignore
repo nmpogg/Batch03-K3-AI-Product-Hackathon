@@ -30,8 +30,7 @@ dist/
 build/
 coverage/
 
-# Local learning materials and uploads
-data/vlearn-pack/slide/
-data/vlearn-pack/slides/
+# Local datasets, learning materials, and uploads
+/data
 .history/
 .vscode/
