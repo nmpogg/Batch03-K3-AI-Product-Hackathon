@@ -6,7 +6,7 @@ import time
 
 API_URL = "http://localhost:5173/api/chat"
 GOLDEN_SET_PATH = "golden-set.csv"
-OUTPUT_MD_PATH = "results-run3.md"
+OUTPUT_MD_PATH = "results-final.md"
 
 def test_chatbot(question, category, q_id=None, retries=3):
     data = json.dumps({
@@ -24,7 +24,7 @@ def test_chatbot(question, category, q_id=None, retries=3):
     req = urllib.request.Request(API_URL, data=data, headers={"Content-Type": "application/json"})
     for attempt in range(retries):
         try:
-            with urllib.request.urlopen(req, timeout=30) as response:
+            with urllib.request.urlopen(req, timeout=90) as response:
                 res_body = response.read().decode("utf-8")
                 return json.loads(res_body)
         except urllib.error.HTTPError as e:
@@ -63,17 +63,31 @@ def run_eval():
             # Simple check
             actual_intent = "unknown"
             has_quiz = False
+            quiz_leaked = False
             is_pass = False
             
             if res and res.get("intent"):
                 actual_intent = res["intent"]
-                if res.get("quiz") and res["quiz"].get("question"):
+                
+                quiz = res.get("quiz")
+                if quiz and quiz.get("question"):
                     has_quiz = True
+                    # Check if the question leaked into the message text
+                    q_text = quiz["question"].strip()
+                    if len(q_text) > 15:
+                        q_text = q_text[:15] # Just check a prefix to be safe against minor formatting
+                    if q_text in res.get("message", ""):
+                        quiz_leaked = True
                 
                 # Check criteria
                 if actual_intent == expected_intent:
-                    if actual_intent == "explain" and not has_quiz:
-                        is_pass = False
+                    if expected_intent == "explain":
+                        if not has_quiz:
+                            is_pass = False
+                        elif quiz_leaked:
+                            is_pass = False
+                        else:
+                            is_pass = True
                     else:
                         is_pass = True
 
@@ -90,7 +104,7 @@ def run_eval():
                 "input": q,
                 "expected": expected_intent,
                 "actual": actual_intent,
-                "has_quiz": "✅" if has_quiz else "❌",
+                "has_quiz": "✅" if has_quiz and not quiz_leaked else ("❌ (Leaked)" if quiz_leaked else "❌"),
                 "is_pass": "✅ PASS" if is_pass else "❌ FAIL"
             })
             
@@ -98,7 +112,7 @@ def run_eval():
 
     # Write report
     with open(OUTPUT_MD_PATH, "w", encoding="utf-8") as f:
-        f.write("# Kết quả Đánh giá — Golden Set · Lượt 3 (Day 1 Focus - Fixed Quota)\n\n")
+        f.write("# Kết quả Đánh giá — Golden Set · Final Run\n\n")
         f.write("## Tóm tắt kết quả\n\n")
         f.write("| Chỉ số | Giá trị |\n|---|---|\n")
         f.write(f"| Tổng case | {pass_count + fail_count} |\n")

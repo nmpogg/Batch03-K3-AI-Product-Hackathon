@@ -336,6 +336,74 @@ button {
   flex: 1;
   outline: none;
   font-size: 15px;
+  position: relative;
+}
+
+.test-me-btn {
+  position: absolute;
+  top: -40px;
+  right: 20px;
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.test-me-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+
+.test-me-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.feedback-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.feedback-btn:hover {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.feedback-btn.active.positive {
+  background: var(--green);
+  color: #000;
+  border-color: var(--green);
+}
+
+.feedback-btn.active.negative {
+  background: var(--red);
+  color: white;
+  border-color: var(--red);
 }
 
 .chat-form input::placeholder {
@@ -431,6 +499,36 @@ button {
   background: rgba(255,255,255,0.1);
   border-radius: 4px;
   font-weight: 700;
+  font-size: 14.5px;
+}
+
+.markdown-content p {
+  margin: 0 0 8px 0;
+}
+
+.markdown-content p:last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content ul, .markdown-content ol {
+  margin: 4px 0 8px 0;
+  padding-left: 20px;
+}
+
+.markdown-content li {
+  margin-bottom: 4px;
+}
+
+.markdown-content h1, .markdown-content h2, .markdown-content h3 {
+  margin: 12px 0 6px 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.quiz-container {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 8px;
   font-size: 13px;
 }
 

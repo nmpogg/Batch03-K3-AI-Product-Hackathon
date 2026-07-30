@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Bot, Send, ChevronLeft, ChevronRight, Moon, UserRound, MousePointer2, Pen, Highlighter, Download, CheckCircle2, XCircle, CircleHelp } from 'lucide-react';
+import { Bot, Send, ChevronLeft, ChevronRight, Moon, UserRound, MousePointer2, Pen, Highlighter, Download, CheckCircle2, XCircle, CircleHelp, ThumbsUp, ThumbsDown, BookOpenCheck } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -22,14 +23,31 @@ function App() {
   const [inputValue, setInputValue] = useState('');
   const [quota, setQuota] = useState({ remaining: 15, limit: 15 });
   const [activePage, setActivePage] = useState(1);
+  const [numPages, setNumPages] = useState(COURSE.slide.pages);
+  const [availableSlides, setAvailableSlides] = useState([COURSE.slide]);
+  const [currentSlide, setCurrentSlide] = useState(COURSE.slide);
   const [userId] = useState(() => 'user-' + Math.random().toString(36).slice(2, 10));
   const chatBodyRef = useRef(null);
 
-  // Fetch initial quota
+  // Fetch initial quota and available slides
   useEffect(() => {
     fetch(`/api/quota?userId=${userId}`)
       .then(res => res.json())
       .then(data => setQuota(data))
+      .catch(console.error);
+      
+    fetch('/api/local-slides')
+      .then(res => res.json())
+      .then(data => {
+        if (data.slides && data.slides.length > 0) {
+          setAvailableSlides(data.slides);
+          // Set to first slide if current isn't in the list
+          if (!data.slides.find(s => s.url === currentSlide.url)) {
+            setCurrentSlide(data.slides[0]);
+            setActivePage(1);
+          }
+        }
+      })
       .catch(console.error);
   }, [userId]);
 
@@ -61,8 +79,8 @@ function App() {
           messages: newMessages.filter(m => !m.loading),
           context: {
             courseTitle: 'AI thực chiến K3',
-            lessonTitle: 'Day 1: AI & LLM Foundation',
-            slideName: COURSE.slide.name,
+            lessonTitle: currentSlide.name,
+            slideName: currentSlide.name,
             page: activePage
           },
           userId
@@ -76,7 +94,9 @@ function App() {
           role: 'assistant',
           content: data.message || data.error || 'Tutor chưa có phản hồi.',
           quiz: data.quiz ? { ...data.quiz, _citations: data.citations } : null,
-          intent: data.intent
+          quizzes: data.quizzes ? data.quizzes.map(q => ({ ...q, _citations: data.citations })) : null,
+          intent: data.intent,
+          feedback: null
         }];
       });
       if (data.quota) setQuota(data.quota);
@@ -88,13 +108,43 @@ function App() {
     }
   };
 
-  const handleQuizAnswer = async (messageIndex, optionIndex) => {
+  const handleFeedback = (index, isPositive) => {
+    setMessages(prev => {
+      const newMsgs = [...prev];
+      newMsgs[index].feedback = isPositive ? 'positive' : 'negative';
+      return newMsgs;
+    });
+    
+    fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId,
+        messageIndex: index,
+        isPositive
+      })
+    }).catch(console.error);
+  };
+
+  const handleQuizAnswer = async (messageIndex, optionIndex, quizIndex = -1) => {
     const msg = messages[messageIndex];
-    if (!msg || !msg.quiz || msg.quiz.selectedIndex !== undefined) return;
+    let activeQuiz = null;
+    
+    if (quizIndex >= 0 && msg.quizzes) {
+      activeQuiz = msg.quizzes[quizIndex];
+    } else if (msg.quiz) {
+      activeQuiz = msg.quiz;
+    }
+    
+    if (!activeQuiz || activeQuiz.selectedIndex !== undefined) return;
 
     // Optimistic UI update
     const updatedMessages = [...messages];
-    updatedMessages[messageIndex].quiz.selectedIndex = optionIndex;
+    if (quizIndex >= 0) {
+      updatedMessages[messageIndex].quizzes[quizIndex].selectedIndex = optionIndex;
+    } else {
+      updatedMessages[messageIndex].quiz.selectedIndex = optionIndex;
+    }
     setMessages(updatedMessages);
 
     try {
@@ -102,11 +152,11 @@ function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          quizQuestion: msg.quiz.question,
-          quizOptions: msg.quiz.options,
-          correctIndex: msg.quiz.correctIndex,
+          quizQuestion: activeQuiz.question,
+          quizOptions: activeQuiz.options,
+          correctIndex: activeQuiz.correctIndex,
           selectedIndex: optionIndex,
-          citations: msg.quiz._citations || [],
+          citations: activeQuiz._citations || [],
           userId
         })
       });
@@ -114,8 +164,9 @@ function App() {
       
       setMessages(prev => {
         const newMsgs = [...prev];
+        let targetQuiz = quizIndex >= 0 ? newMsgs[messageIndex].quizzes[quizIndex] : newMsgs[messageIndex].quiz;
         if (evalPayload.explanation) {
-          newMsgs[messageIndex].quiz.serverExplanation = evalPayload.explanation;
+          targetQuiz.serverExplanation = evalPayload.explanation;
         }
         return newMsgs;
       });
@@ -136,7 +187,21 @@ function App() {
           <div style={{color: 'var(--red)'}}>V</div>Learn
         </div>
         <div style={{marginLeft: 20}}>
-          <h1 style={{fontSize: 16, margin: 0, fontWeight: 700}}>{COURSE.slide.name}</h1>
+          <select 
+            style={{fontSize: 16, margin: 0, fontWeight: 700, background: 'transparent', border: 'none', color: 'var(--text)', outline: 'none', cursor: 'pointer', appearance: 'none'}}
+            value={currentSlide.url}
+            onChange={(e) => {
+              const slide = availableSlides.find(s => s.url === e.target.value);
+              if (slide) {
+                setCurrentSlide(slide);
+                setActivePage(1);
+              }
+            }}
+          >
+            {availableSlides.map((s, idx) => (
+              <option key={idx} value={s.url} style={{color: '#000'}}>{s.name}</option>
+            ))}
+          </select>
           <p style={{fontSize: 13, color: 'var(--muted)', margin: 0}}>{COURSE.code}</p>
         </div>
       </header>
@@ -149,16 +214,17 @@ function App() {
                 <button className="pill-btn" style={{background: 'var(--surface-soft)', color: 'var(--text)'}}>Slide Bài Giảng</button>
               </div>
               <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
-                <span style={{fontSize: 14, fontWeight: 600}}>Trang {activePage} / {COURSE.slide.pages}</span>
+                <span style={{fontSize: 14, fontWeight: 600}}>Trang {activePage} / {numPages || '?'}</span>
                 <button className="icon-btn" onClick={() => setActivePage(p => Math.max(1, p - 1))}><ChevronLeft size={16}/></button>
-                <button className="icon-btn" onClick={() => setActivePage(p => Math.min(COURSE.slide.pages, p + 1))}><ChevronRight size={16}/></button>
+                <button className="icon-btn" onClick={() => setActivePage(p => Math.min(numPages || 1, p + 1))}><ChevronRight size={16}/></button>
               </div>
             </div>
             <div className="pdf-viewer">
               {useMemo(() => (
                 <Document
-                  file={COURSE.slide.url}
+                  file={currentSlide.url}
                   loading={<div className="pdf-loading">Đang tải slide...</div>}
+                  onLoadSuccess={({ numPages }) => setNumPages(numPages)}
                 >
                   <Page 
                     pageNumber={activePage} 
@@ -166,7 +232,7 @@ function App() {
                     renderAnnotationLayer={false}
                   />
                 </Document>
-              ), [activePage, COURSE.slide.url])}
+              ), [activePage, currentSlide.url])}
             </div>
           </div>
         </section>
@@ -192,56 +258,80 @@ function App() {
 
           <div className="chat-body" ref={chatBodyRef}>
             <div style={{fontSize: 12, color: 'var(--muted)', textAlign: 'center', marginBottom: 10}}>
-              Ngữ cảnh: {COURSE.slide.name} · trang {activePage}
+              Ngữ cảnh: {currentSlide.name} · trang {activePage}
             </div>
             
-            {messages.map((m, i) => (
-              <div key={i} className={`message ${m.role}`}>
-                <div dangerouslySetInnerHTML={{__html: m.content.replace(/\\n/g, '<br/>')}} />
-                
-                {m.quiz && (
-                  <div className="quiz-container">
-                    <div className="quiz-label"><CircleHelp size={16}/> Kiểm tra nhanh</div>
-                    <div className="quiz-question">{m.quiz.question}</div>
-                    <div className="quiz-options">
-                      {m.quiz.options.map((opt, optIdx) => {
-                        const hasAnswered = m.quiz.selectedIndex !== undefined;
-                        const isSelected = m.quiz.selectedIndex === optIdx;
-                        const isCorrect = m.quiz.correctIndex === optIdx;
-                        let btnClass = 'quiz-option';
-                        if (hasAnswered) {
-                          if (isSelected) {
-                            btnClass += isCorrect ? ' selected correct' : ' selected incorrect';
-                          } else if (isCorrect) {
-                            btnClass += ' selected correct';
-                          }
-                        }
-                        
-                        return (
-                          <button 
-                            key={optIdx} 
-                            className={btnClass}
-                            onClick={() => handleQuizAnswer(i, optIdx)}
-                            disabled={hasAnswered}
-                          >
-                            <div className="quiz-option-key">{String.fromCharCode(65 + optIdx)}</div>
-                            <div style={{flex: 1}}>{opt}</div>
-                            {hasAnswered && isCorrect && <CheckCircle2 size={18} color="var(--green)"/>}
-                            {hasAnswered && isSelected && !isCorrect && <XCircle size={18} color="var(--red)"/>}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {m.quiz.selectedIndex !== undefined && (
-                      <div className={`quiz-feedback ${m.quiz.selectedIndex === m.quiz.correctIndex ? 'correct' : 'incorrect'}`}>
-                        <strong>{m.quiz.selectedIndex === m.quiz.correctIndex ? 'Chính xác! ✅ +1 lượt' : 'Chưa chính xác ❌'}</strong>
-                        <p style={{marginTop: 6, marginBottom: 0}}>{m.quiz.serverExplanation || m.quiz.explanation}</p>
-                      </div>
-                    )}
+            {messages.map((m, i) => {
+              const quizzesToRender = m.quizzes || (m.quiz ? [m.quiz] : []);
+              return (
+                <div key={i} className={`message ${m.role}`}>
+                  <div className="markdown-content">
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
                   </div>
-                )}
-              </div>
-            ))}
+                  
+                  {quizzesToRender.map((quizObj, qIdx) => (
+                    <div key={qIdx} className="quiz-container" style={{marginTop: 10}}>
+                      <div className="quiz-label"><CircleHelp size={16}/> Kiểm tra nhanh</div>
+                      <div className="quiz-question">{quizObj.question}</div>
+                      <div className="quiz-options">
+                        {quizObj.options.map((opt, optIdx) => {
+                          const hasAnswered = quizObj.selectedIndex !== undefined;
+                          const isSelected = quizObj.selectedIndex === optIdx;
+                          const isCorrect = quizObj.correctIndex === optIdx;
+                          let btnClass = 'quiz-option';
+                          if (hasAnswered) {
+                            if (isSelected) {
+                              btnClass += isCorrect ? ' selected correct' : ' selected incorrect';
+                            } else if (isCorrect) {
+                              btnClass += ' selected correct';
+                            }
+                          }
+                          
+                          return (
+                            <button 
+                              key={optIdx} 
+                              className={btnClass}
+                              onClick={() => handleQuizAnswer(i, optIdx, m.quizzes ? qIdx : -1)}
+                              disabled={hasAnswered}
+                            >
+                              <div className="quiz-option-key">{String.fromCharCode(65 + optIdx)}</div>
+                              <div style={{flex: 1}}>{opt}</div>
+                              {hasAnswered && isCorrect && <CheckCircle2 size={18} color="var(--green)"/>}
+                              {hasAnswered && isSelected && !isCorrect && <XCircle size={18} color="var(--red)"/>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {quizObj.selectedIndex !== undefined && (
+                        <div className={`quiz-feedback ${quizObj.selectedIndex === quizObj.correctIndex ? 'correct' : 'incorrect'}`}>
+                          <strong>{quizObj.selectedIndex === quizObj.correctIndex ? 'Chính xác! ✅ +1 lượt' : 'Chưa chính xác ❌'}</strong>
+                          <p style={{marginTop: 6, marginBottom: 0}}>{quizObj.serverExplanation || quizObj.explanation}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {m.role === 'assistant' && !m.loading && (
+                    <div className="feedback-actions">
+                      <button 
+                        className={`feedback-btn ${m.feedback === 'positive' ? 'active positive' : ''}`} 
+                        onClick={() => handleFeedback(i, true)}
+                        title="Hữu ích"
+                      >
+                        <ThumbsUp size={14} />
+                      </button>
+                      <button 
+                        className={`feedback-btn ${m.feedback === 'negative' ? 'active negative' : ''}`} 
+                        onClick={() => handleFeedback(i, false)}
+                        title="Không hữu ích"
+                      >
+                        <ThumbsDown size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <div className="chat-input-container">
