@@ -18,7 +18,7 @@ const COURSE = {
 function App() {
   const [messages, setMessages] = useState([{
     role: 'assistant',
-    content: 'Xin chào! Mình là VLearn Tutor 🎓\n\nMình có thể giải thích nội dung bài học dựa trên transcript và sinh câu hỏi kiểm tra hiểu bài. Trả lời đúng → hoàn lại 1 lượt hỏi!\n\nNhập câu hỏi bên dưới nhé.'
+    content: 'Xin chào! Mình là VLearn Tutor 🎓\n\nMình có thể giải thích nội dung bài học dựa trên tài liệu và sinh câu hỏi kiểm tra hiểu bài. Trả lời đúng phần trắc nghiệm → bạn sẽ không bị mất lượt hỏi đó nhé!\n\nNhập câu hỏi bên dưới nào.'
   }]);
   const [inputValue, setInputValue] = useState('');
   const [quota, setQuota] = useState({ remaining: 15, limit: 15 });
@@ -304,7 +304,7 @@ function App() {
                       </div>
                       {quizObj.selectedIndex !== undefined && (
                         <div className={`quiz-feedback ${quizObj.selectedIndex === quizObj.correctIndex ? 'correct' : 'incorrect'}`}>
-                          <strong>{quizObj.selectedIndex === quizObj.correctIndex ? 'Chính xác! ✅ +1 lượt' : 'Chưa chính xác ❌'}</strong>
+                          <strong>{quizObj.selectedIndex === quizObj.correctIndex ? 'Chính xác! ✅ (Không bị trừ lượt)' : 'Chưa chính xác ❌'}</strong>
                           <p style={{marginTop: 6, marginBottom: 0}}>{quizObj.serverExplanation || quizObj.explanation}</p>
                         </div>
                       )}
