@@ -13,7 +13,7 @@
 | 4 | **Bằng chứng đầu** | Mining 1.261 turns chatlog thật: `asked_check_question = True` chỉ **3/1.261 lần (0.24%)** — 1.258 lần giải thích xong, tutor KHÔNG kiểm tra học viên đã hiểu chưa |
 | 5 | **Lát cắt MỘT CÂU** | Học viên đang ôn bài sau buổi học → hỏi AI tutor về khái niệm chưa rõ → AI giải thích có trích dẫn transcript + tự động đặt 1 câu hỏi kiểm tra → học viên trả lời đúng → hiểu sâu hơn + nhận lại 1 lượt hỏi |
 | 6 | **Automation + lý do** | **Conditional** — AI tự giải thích + sinh câu hỏi khi có căn cứ transcript; từ chối rõ khi ngoài phạm vi. Lý do: sai kiến thức AI truyền cho học viên = học sai → cost-of-error cao, cần có grounding |
-| 7 | **Willing users + phân công** | Willing users: [tên 1], [tên 2], [tên 3] · Phân công: A=evidence/spec, B=prompt/eval, C=frontend/flow, D=spec§4-9/validation |
+| 7 | **Willing users + phân công** | Willing users: Phong, Đại, Vũ, Trang · Phân công: Đại=evidence/spec, Phong=prompt/eval, Trang=frontend/flow, Vũ=spec§4-9/validation |
 
 ---
 
@@ -34,7 +34,7 @@
 | Tutor dùng `misconceptions` field | **0 / 1.261** | **0%** |
 | Down-rated: không có citation | **29** | vs 8 có citation |
 
-**Phương pháp đếm:** đọc toàn bộ 2.522 dòng CSV bằng script Python, đếm theo field `asked_check_question`, `citations`, `follow_ups`, `misconceptions`, `rating`. Kết quả kiểm lại được bằng cách chạy lại script `mine.py` + `mine2.py` trong repo.
+**Phương pháp đếm:** đọc toàn bộ 2.522 dòng CSV bằng script Python, đếm theo field `asked_check_question`, `citations`, `follow_ups`, `misconceptions`, `rating`. Kết quả kiểm lại được bằng cách chạy lại script `evidence-mine.py` + `evidence-mine2.py` trong repo.
 
 ### ≥5 ví dụ nguyên văn từ chatlog
 

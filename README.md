@@ -76,6 +76,6 @@ repo/
 
 **4 tính năng chính:**
 1. Trả lời câu hỏi kèm trích dẫn transcript `[Buổi N · §M]`
-2. Hỏi về trao đổi giảng viên–học viên trong buổi học hôm đó
+2. Hỏi về nội dung bài học/slide hôm đó
 3. Tự động sinh câu hỏi kiểm tra sau mỗi lần giải thích
 4. Hệ thống lượt hỏi: 15 lượt/ngày · trả lời đúng → hoàn 1 lượt

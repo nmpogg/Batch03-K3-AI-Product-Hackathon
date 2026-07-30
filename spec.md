@@ -1,4 +1,4 @@
-# AI SPEC — VLearn Smart Tutor (AI Tutor có kiểm tra hiểu bài) · Nhóm [XX] · Zone [X]
+# AI SPEC — VLearn Smart Tutor (AI Tutor có kiểm tra hiểu bài) · Nhóm [B1-D305]
 Hướng: [x] A — VLearn  [ ] B — Trợ lý Học viên  [ ] C — Làn mở
 Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
 
@@ -39,12 +39,12 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
   1. Không build hệ thống tự động giải bài tập chấm điểm (chỉ tập trung ôn tập khái niệm).
   2. Không build phân tích video/hình ảnh (chỉ xử lý text transcript).
   3. Không build hệ thống theo dõi tiến độ học dài hạn qua nhiều môn (chỉ giới hạn trong 1 session môn học).
-- **Mức prototype nhắm tới:** [ ] Sketch [x] Mock [ ] Working — **phần nào mock, phần nào thật:** UI giao diện chat mock trên frontend, data transcript mock. Lời gọi AI (sinh câu trả lời, sinh câu hỏi kiểm tra và chấm điểm) là chạy AI thật qua API.
+- **Mức prototype nhắm tới:** [ ] Sketch [x] Mock [ ] Working — **phần nào mock, phần nào thật:** UI giao diện chat trên frontend, data transcript của BTC cấp. Lời gọi AI (sinh câu trả lời, sinh câu hỏi kiểm tra và chấm điểm) là chạy AI thật qua API.
 - **Automation:** [ ] augment [x] conditional [ ] automate — **lý do theo cost-of-error:** AI tự giải thích + sinh câu hỏi khi có căn cứ transcript; từ chối rõ khi ngoài phạm vi. Lý do: sai kiến thức AI truyền cho học viên = học viên tiếp thu sai → cost-of-error cao, cần có grounding chặt chẽ, nếu không chắc thì không sinh câu hỏi.
 - **§4b. Nguyên tắc đã áp dụng (≥4 — HAX/PAIR, xem guide):**
   | Nguyên tắc | Áp cụ thể vào đâu trong prototype |
   |---|---|
-  | **G1** — Làm rõ hệ thống làm được gì | Tin nhắn chào đầu tiên: "Tôi có thể giải thích nội dung từ 6 buổi học dựa trên transcript. Hỏi tôi về khái niệm, trao đổi lớp hôm nay, hoặc để tôi kiểm tra bạn nhé!" |
+  | **G1** — Làm rõ hệ thống làm được gì | Tin nhắn chào đầu tiên: "Tôi có thể giải thích nội dung trong buổi học dựa trên transcript. Hỏi tôi về khái niệm, trao đổi lớp hôm nay, hoặc để tôi kiểm tra bạn nhé!" |
   | **G2** — Làm rõ độ tin cậy | Mọi câu trả lời hiển thị trích dẫn nguồn `[B3·§12]`; nếu không có căn cứ thì nói rõ |
   | **G10** — Thu hẹp phạm vi khi nghi ngờ | Câu hỏi mơ hồ → AI hỏi lại 1 câu ("Bạn đang hỏi về buổi học nào?") thay vì đoán |
   | **G11** — Giải thích vì sao | Đánh giá câu trả lời kiểm tra: giải thích đúng/sai theo đúng điểm trong transcript |
@@ -87,7 +87,7 @@ Loại: [ ] Tối ưu tính năng có sẵn  [x] Tính năng mới
   - Nguyễn Thùy Trang: Frontend chat + flow lượt hỏi · integration API · commit đầu
   - Trần Hoàng Vũ: Spec §4-§9 · tổ chức CP5 validation · slide demo 6 trang
 - **Willing users (≥3 tên) + kế hoạch vòng validation CP5 (3 câu hỏi, ai log):** 
-  - Willing users: Nguyễn Tuấn Anh, Trần Thị Bích, Lê Minh Hoàng (Học viên VLearn).
+  - Willing users: Học viên VLearn cùng phòng lab.
   - Kế hoạch: Test demo vào sáng N2. Trần Hoàng Vũ chịu trách nhiệm log.
   - 3 câu hỏi validation: (1) Bạn có thấy câu hỏi kiểm tra này giúp bạn nhớ bài tốt hơn không? (2) Khi AI báo bạn trả lời sai, giải thích có thuyết phục không? (3) Bạn có cảm thấy bị phiền khi AI tự động hỏi lại không?
 - **Multi-prototype (nếu làm):** Trục khác biệt: Mức độ chủ động của AI (Chủ động vs Chờ gọi).
