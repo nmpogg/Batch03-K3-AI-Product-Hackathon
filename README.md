@@ -1,18 +1,18 @@
 # VLearn Smart Tutor — AI Spec Hackathon Batch 03
 
 **Hướng:** A — VLearn · **Loại:** Tính năng mới  
-**Nhóm:** [XX] · **Zone:** [X]
+**Nhóm:** B1-D305
 
 ---
 
 ## Thành viên
 
-| Mã HV | Họ và tên | Vai |
-|---|---|---|
-| 2A202601245 | Nguyễn Văn Đại | Person A |
-| 2A202602025 | Ngô Minh Phong | Person B |
-| 2A202601559 | Nguyễn Thùy Trang | Person C |
-| 2A202602000 | Trần Hoàng Vũ | Person D |
+| Mã HV | Họ và tên |
+|---|---|
+| 2A202601245 | Nguyễn Văn Đại |
+| 2A202602025 | Ngô Minh Phong |
+| 2A202601559 | Nguyễn Thùy Trang |
+| 2A202602000 | Trần Hoàng Vũ |
 
 ---
 
