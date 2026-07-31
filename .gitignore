@@ -31,8 +31,14 @@ build/
 coverage/
 
 # Local datasets, learning materials, and uploads
-/data
+data/
 .history/
 .vscode/
 docs/
 tham-khao/
+SLIDE.md
+tham-khao.md
+01-de-bai.md
+02-guide.md
+03-template-ai-spec.md
+04-rubric.md
